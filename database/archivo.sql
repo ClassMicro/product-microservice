@@ -1,4 +1,4 @@
-INSERT INTO "Product"(name, price) VALUES
+INSERT INTO "product"(name, price) VALUES
 ('Laptop Gaming', 1299.99),
 ('Mouse Inalámbrico', 29.99),
 ('Teclado Mecánico', 89.99),
