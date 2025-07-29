@@ -6,6 +6,7 @@ import { RpcException } from '@nestjs/microservices';
 import { Product } from './entities/product.entity';
 import { In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { validate as isValidUUID } from 'uuid';
 
 @Injectable()
 export class ProductsService  {
@@ -98,15 +99,36 @@ private readonly logger = new Logger('ProductsService');
 
    async validateProduct(ids : string[])
   {
-   // Quitamos todos los datos duplicados de UUIDs que vienen en nuestro array
-   // Array.from(new Set()) elimina duplicados automáticamente para strings/UUIDs
-   ids = Array.from( new Set(ids));
+   // Limpiar y eliminar duplicados de UUIDs
+   const cleanedIds = ids.map(id => id.trim().replace(/[«»]/g, '')); // Quitar caracteres especiales
+   const uniqueIds = Array.from(new Set(cleanedIds)); // Eliminar duplicados
+   
+   // Validar que todos los IDs sean UUIDs válidos
+   const invalidIds = uniqueIds.filter(id => !isValidUUID(id));
+   
+   if (invalidIds.length > 0) {
+     throw new RpcException({
+       message: `UUIDs inválidos encontrados: ${invalidIds.join(', ')}. Formato esperado: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`,
+       status: HttpStatus.BAD_REQUEST
+     });
+   }
+   
+   // Filtrar solo los IDs válidos
+   const validIds = uniqueIds.filter(id => isValidUUID(id));
+   
+   if (validIds.length === 0) {
+     throw new RpcException({
+       message: 'No se proporcionaron IDs válidos',
+       status: HttpStatus.BAD_REQUEST
+     });
+   }
+   
     const products = await this.productRepository.find({
       where: {
-        id: In(ids)
+        id: In(validIds)
       }
     });
-    if (products.length !== ids.length) {
+    if (products.length !== validIds.length) {
       throw new RpcException({
         message: `no hay productos con los IDs proporcionados`,
         status: HttpStatus.NOT_FOUND

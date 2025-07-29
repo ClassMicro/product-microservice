@@ -2,7 +2,7 @@ import { Controller, ParseIntPipe, ParseUUIDPipe } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { PaginationDto } from 'src/common';
+import { PaginationDto, UuidValidationPipe } from 'src/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
 @Controller('products')
@@ -36,7 +36,7 @@ export class ProductsController {
   }
   
   @MessagePattern({cmd : 'validateproduct'})
-  validateProduct(@Payload()ids : string[]) {
-    this.productsService.validateProduct(ids);
+  validateProduct(@Payload() ids : string[]) {
+    return this.productsService.validateProduct(ids);
   }
 }
